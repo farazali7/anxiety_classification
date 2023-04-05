@@ -559,7 +559,7 @@ class CNN(nn.Module):
     def __init__(self, model_cfg):
         super(CNN, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=7)
-        self.pool1 = nn.MaxPool2d(kernel_size=2)
+        self.pool1 = nn.MaxPool2d(kernel_size=4)
         self.bnormconv1 = nn.BatchNorm2d(num_features=64)
         self.dropout1 = nn.Dropout2d(model_cfg['dropout'])
 
@@ -568,7 +568,7 @@ class CNN(nn.Module):
         self.bnormconv2 = nn.BatchNorm2d(num_features=128)
         self.dropout2 = nn.Dropout2d(model_cfg['dropout'])
 
-        self.hidden1 = nn.Linear(15488, 512)
+        self.hidden1 = nn.Linear(2048, 512)
         self.bnorm1 = nn.BatchNorm1d(num_features=512)
 
         self.hidden2 = nn.Linear(512, 256)
@@ -593,7 +593,7 @@ class CNN(nn.Module):
         x = self.dropout2(x)
         x = self.pool2(x)
 
-        x = x.reshape(-1, 15488)
+        x = x.reshape(-1, 2048)
 
         x = self.hidden1(x)
         x = self.bnorm1(x)

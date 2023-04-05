@@ -92,9 +92,26 @@ def load_and_concat(file_names, ext=None, include_uid=False, combine_channels=Fa
 
     # TODO: REMOVE
     if downsample_force:
-        downsampled_cls_idxs = np.random.choice(np.where(all_y==3)[0], 500)
-        idxs_to_keep = np.hstack([np.where(all_y != 3)[0], downsampled_cls_idxs])
-        all_x = all_x[idxs_to_keep]
-        all_y = all_y[idxs_to_keep]
+        bc = np.bincount(all_y)
+        max_samples = max(bc)
+        new_x, new_y = [], []
+        for cls, count in enumerate(bc):
+            upscale = max_samples // count
+            idxs = np.where(all_y == cls)[0]
+            if upscale > 1:
+                new_x.append(np.repeat(all_x[idxs], upscale+1, 0))
+                new_y.append(np.repeat(all_y[idxs], upscale+1, 0))
+            else:
+                new_x.append(all_x[idxs])
+                new_y.append(all_y[idxs])
+
+        all_x = np.vstack(new_x)
+        all_y = np.hstack(new_y)
+
+    # if downsample_force:
+    #     downsampled_cls_idxs = np.random.choice(np.where(all_y==3)[0], 500)
+    #     idxs_to_keep = np.hstack([np.where(all_y != 3)[0], downsampled_cls_idxs])
+    #     all_x = all_x[idxs_to_keep]
+    #     all_y = all_y[idxs_to_keep]
 
     return all_x, all_y
