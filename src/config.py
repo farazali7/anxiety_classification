@@ -50,7 +50,7 @@ cfg = {
     'NUM_WORKERS': os.cpu_count(),
 
     # Data partitioning args
-    'CV_FOLDS': 5,
+    'CV_FOLDS': 4,
     'TEST_SET_PERCENTAGE': 0,
 
     'COMBINE_CHANNELS': True,
@@ -111,8 +111,8 @@ cfg = {
         'CNN': {
             "dropout": {
                 "distribution": "uniform",
-                "min": 0.3,
-                "max": 0.5
+                "min": 0.5,
+                "max": 0.7
             },
             "learning_rate": {
                 "distribution": "log_uniform_values",
