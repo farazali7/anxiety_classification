@@ -5,7 +5,7 @@ cfg = {
         'DREAMER': {
             'RAW_DATA_PATH': 'data/raw/DREAMER',
             'FORMATTED_DATA_PATH': 'data/formatted/iter1/DREAMER',
-            'PROCESSED_DATA_PATH': 'data/processed/iter1/DREAMER',
+            'PROCESSED_DATA_PATH': 'data/processed/iter2/DREAMER',
             'SUBJECTS': [str(i) for i in range(1, 24)],
             'SAMPLING_FREQ': 128
         },
@@ -36,7 +36,7 @@ cfg = {
     'BUTTERWORTH_FREQ': [4, 45],
 
     # Feature extraction args
-    'STANDARDIZE': False,  # Set to False to normalize data into [-1, 1] range instead (MaxAbsScaler)
+    'STANDARDIZE': True,  # Set to False to normalize data into [-1, 1] range instead (MaxAbsScaler)
     'FEATURE_EXTRACTION_FUNC': 'feature_set_1',
 
     'MODEL_ARCHITECTURE': 'CNN',
