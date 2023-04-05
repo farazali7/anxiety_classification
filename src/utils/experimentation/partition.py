@@ -158,7 +158,7 @@ def round_robin_fill(data_sources, target, max_source_len, remove_from_source=Fa
     :param remove_from_source: Boolean indicating whether to pop elements from respective sources
     :return: List populated with elements from data_sources
     """
-    assert target > 0, 'Variable \'target\' cannot be <= 0.'
+    assert target >= 0, 'Variable \'target\' cannot be < 0.'
 
     res = []
 

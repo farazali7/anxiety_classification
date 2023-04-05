@@ -51,7 +51,7 @@ cfg = {
 
     # Data partitioning args
     'CV_FOLDS': 5,
-    'TEST_SET_PERCENTAGE': 0.2,
+    'TEST_SET_PERCENTAGE': 0,
 
     'CLASSES': ['LVLA', 'LVHA', 'HVLA', 'HVHA'],
 

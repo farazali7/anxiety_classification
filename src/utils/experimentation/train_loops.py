@@ -260,29 +260,29 @@ def perform_sweep_iter(train_set, test_set, model_def, trainer_args, callback_ar
                                                logger=wandb_logger,
                                                save_dir=save_dir)
 
-        # Get test set performance
-        all_test_x, all_test_y = load_and_concat(test_set, ext='.pkl')
-
-        test_data = torch.Tensor(all_test_x)
-        test_labels = torch.Tensor(all_test_y).to(torch.long)
-        test_dataset = torch.utils.data.TensorDataset(test_data, test_labels)
-
-        test_data_loader_args = deepcopy(data_loader_args)
-        test_data_loader_args['shuffle'] = False
-        test_loader = torch.utils.data.DataLoader(test_dataset, **test_data_loader_args)
-
-        trained_model = load_model_from_checkpoint(checkpoint_path=model_path, metrics=trainer_args['metrics'].clone())
-        trainer = Trainer()
-
-        test_out = {}
-        test_out = trainer.predict(model=trained_model, dataloaders=test_loader)
-        test_preds, test_targets = aggregate_predictions(test_out)
-        metrics_c = trainer_args['metrics'].clone()
-        test_metrics = metrics_c(test_preds, test_targets)
-
-        scalar_test_metrics = flatten_dict(test_metrics, trainer_args['classes'])
-
-        # Create df and log test_metrics as a table
-        test_metrics_df = pd.DataFrame(scalar_test_metrics, index=[0])
-        test_metrics_df['model_ckpt'] = model_path
-        wandb_logger.log_table('Test Metrics', dataframe=test_metrics_df)
+        # # Get test set performance
+        # all_test_x, all_test_y = load_and_concat(test_set, ext='.pkl')
+        #
+        # test_data = torch.Tensor(all_test_x)
+        # test_labels = torch.Tensor(all_test_y).to(torch.long)
+        # test_dataset = torch.utils.data.TensorDataset(test_data, test_labels)
+        #
+        # test_data_loader_args = deepcopy(data_loader_args)
+        # test_data_loader_args['shuffle'] = False
+        # test_loader = torch.utils.data.DataLoader(test_dataset, **test_data_loader_args)
+        #
+        # trained_model = load_model_from_checkpoint(checkpoint_path=model_path, metrics=trainer_args['metrics'].clone())
+        # trainer = Trainer()
+        #
+        # test_out = {}
+        # test_out = trainer.predict(model=trained_model, dataloaders=test_loader)
+        # test_preds, test_targets = aggregate_predictions(test_out)
+        # metrics_c = trainer_args['metrics'].clone()
+        # test_metrics = metrics_c(test_preds, test_targets)
+        #
+        # scalar_test_metrics = flatten_dict(test_metrics, trainer_args['classes'])
+        #
+        # # Create df and log test_metrics as a table
+        # test_metrics_df = pd.DataFrame(scalar_test_metrics, index=[0])
+        # test_metrics_df['model_ckpt'] = model_path
+        # wandb_logger.log_table('Test Metrics', dataframe=test_metrics_df)
