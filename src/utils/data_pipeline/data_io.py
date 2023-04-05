@@ -61,7 +61,7 @@ def convert_to_full_paths(file_names, base_path):
     return [os.path.join(base_path, file_name) for file_name in file_names]
 
 
-def load_and_concat(file_names, ext=None, include_uid=False):
+def load_and_concat(file_names, ext=None, include_uid=False, combine_channels=False, downsample_force=False):
     """
     Load and combine data (X and y) from multiple files. Add given extension if present to each file before loading.
     :param file_names: List of file names
@@ -84,5 +84,17 @@ def load_and_concat(file_names, ext=None, include_uid=False):
 
     all_x = np.concatenate(all_x)
     all_y = np.concatenate(all_y).astype(np.int8)
+    if combine_channels:
+        num_channels = all_x.shape[1]
+        all_x = all_x.reshape(-1, all_x.shape[2], all_x.shape[3])
+        all_y = np.repeat(all_y, num_channels)
+
+
+    # TODO: REMOVE
+    if downsample_force:
+        downsampled_cls_idxs = np.random.choice(np.where(all_y==3)[0], 500)
+        idxs_to_keep = np.hstack([np.where(all_y != 3)[0], downsampled_cls_idxs])
+        all_x = all_x[idxs_to_keep]
+        all_y = all_y[idxs_to_keep]
 
     return all_x, all_y

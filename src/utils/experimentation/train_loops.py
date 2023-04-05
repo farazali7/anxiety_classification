@@ -141,18 +141,22 @@ def cross_val(data, model_def, training_params, num_folds, logger, save_dir=None
         print('LOADING TRAINING AND VALIDATION DATA...')
         # Load all participant training data
         all_train_x, all_train_y = load_and_concat(train_ids, ext='.pkl',
-                                                   include_uid=training_params['batch_specific_train'])
+                                                   include_uid=training_params['batch_specific_train'],
+                                                   combine_channels=training_params['combine_channels'],
+                                                   downsample_force=True)
 
         # Get validation fold
         val_ids = folds[idx]
 
         # Load all participant validation data
-        all_val_x, all_val_y = load_and_concat(val_ids, ext='.pkl')
+        all_val_x, all_val_y = load_and_concat(val_ids, ext='.pkl',
+                                               combine_channels=training_params['combine_channels'])
 
         # Set fold-specific training args
         fold_num = idx + 1
         monitor_metric_prefix = 'fold_' + str(fold_num) + '/'
         training_params_fold = deepcopy(training_params)
+        training_params_fold.pop('combine_channels')
         training_params_fold['trainer_args']['fold'] = fold_num
         training_params_fold['callback_args']['MODEL_CHECKPOINT']['filename'] = \
             training_params_fold['callback_args']['MODEL_CHECKPOINT']['filename'] + '--fold=' + str(fold_num)
@@ -251,7 +255,8 @@ def perform_sweep_iter(train_set, test_set, model_def, trainer_args, callback_ar
                            'data_loader_args': data_loader_args,
                            'callback_args': callback_args,
                            'num_epochs': num_epochs,
-                           'batch_specific_train': cfg['BATCH_SPECIFIC_TRAIN']}
+                           'batch_specific_train': cfg['BATCH_SPECIFIC_TRAIN'],
+                           'combine_channels': cfg['COMBINE_CHANNELS']}
 
         model_score, model_path = train_single(train_set=train_set,
                                                model_def=model_def,

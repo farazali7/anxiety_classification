@@ -558,21 +558,17 @@ class CNN_ITER2(nn.Module):
 class CNN(nn.Module):
     def __init__(self, model_cfg):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=14, out_channels=64, kernel_size=7)
-        # self.pool1 = nn.MaxPool2d(kernel_size=2)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=7)
+        self.pool1 = nn.MaxPool2d(kernel_size=2)
         self.bnormconv1 = nn.BatchNorm2d(num_features=64)
         self.dropout1 = nn.Dropout2d(model_cfg['dropout'])
 
         self.conv2 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=7)
-        # self.pool2 = nn.MaxPool2d(kernel_size=2)
+        self.pool2 = nn.MaxPool2d(kernel_size=2)
         self.bnormconv2 = nn.BatchNorm2d(num_features=128)
         self.dropout2 = nn.Dropout2d(model_cfg['dropout'])
 
-        self.conv3 = nn.Conv2d(in_channels=128, out_channels=64, kernel_size=5)
-        self.bnormconv3 = nn.BatchNorm2d(num_features=64)
-        self.dropout3 = nn.Dropout2d(model_cfg['dropout'])
-
-        self.hidden1 = nn.Linear(135424, 512)
+        self.hidden1 = nn.Linear(15488, 512)
         self.bnorm1 = nn.BatchNorm1d(num_features=512)
 
         self.hidden2 = nn.Linear(512, 256)
@@ -584,22 +580,20 @@ class CNN(nn.Module):
         self.dropout = nn.Dropout(model_cfg['dropout'])
 
     def forward(self, x):
+        x = torch.unsqueeze(x, 1)  # Single channel image
         x = self.conv1(x)
         x = self.bnormconv1(x)
         x = F.relu(x)
         x = self.dropout1(x)
+        x = self.pool1(x)
 
         x = self.conv2(x)
         x = self.bnormconv2(x)
         x = F.relu(x)
         x = self.dropout2(x)
+        x = self.pool2(x)
 
-        x = self.conv3(x)
-        x = self.bnormconv3(x)
-        x = F.relu(x)
-        x = self.dropout3(x)
-
-        x = x.reshape(-1, 135424)
+        x = x.reshape(-1, 15488)
 
         x = self.hidden1(x)
         x = self.bnorm1(x)

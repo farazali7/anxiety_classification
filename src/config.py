@@ -43,7 +43,7 @@ cfg = {
     'EXPERIMENT_TYPE': 'train',
 
     # Training & validation args
-    'BATCH_SIZE': 32,
+    'BATCH_SIZE': 128,
     'EPOCHS': 40,
     'LR': 0.001,
     'SHUFFLE': True,
@@ -52,6 +52,8 @@ cfg = {
     # Data partitioning args
     'CV_FOLDS': 5,
     'TEST_SET_PERCENTAGE': 0,
+
+    'COMBINE_CHANNELS': True,
 
     'CLASSES': ['LVLA', 'LVHA', 'HVLA', 'HVHA'],
 
