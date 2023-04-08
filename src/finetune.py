@@ -6,54 +6,16 @@ from copy import deepcopy
 from pytorch_lightning.trainer import Trainer
 from torchmetrics import MetricCollection, Precision, Recall, F1Score
 
-from classification.src.config import cfg
-from classification.src.utils.data_pipeline import convert_to_full_paths, load_and_concat
-from classification.src.models.models import load_model_from_checkpoint, get_model
-from classification.src.utils.experimentation import define_callbacks, aggregate_predictions, compute_class_weights, \
+from src.config import cfg
+from src.utils.data_pipeline import convert_to_full_paths, load_and_concat
+from src.models.models import load_model_from_checkpoint, get_model
+from src.utils.experimentation import define_callbacks, aggregate_predictions, compute_class_weights, \
     majority_vote_transform
 
 import pandas as pd
 
 
-def adjust_subject_paths(subjects):
-    subject_ids = [s.split('/')[-1] for s in subjects]
-
-    np_healthy_subjects = cfg['DATASETS']['NINAPRO_DB10']['HEALTHY_SUBJECTS']
-    np_process_path = cfg['DATASETS']['NINAPRO_DB10']['PROCESSED_DATA_PATH']
-
-    gm_healthy_subjects = ['S' + str(x + 115) for x in cfg['DATASETS']['GRABMYO']['HEALTHY_SUBJECTS']]
-    gm_process_path = cfg['DATASETS']['GRABMYO']['PROCESSED_DATA_PATH']
-
-    np2_healthy_subjects = ['np2_'+str(s) for s in cfg['DATASETS']['NINAPRO_DB2']['HEALTHY_SUBJECTS']]
-    np2_process_path = cfg['DATASETS']['NINAPRO_DB2']['PROCESSED_DATA_PATH']
-
-    np5_healthy_subjects = ['np5_'+str(s) for s in cfg['DATASETS']['NINAPRO_DB5']['HEALTHY_SUBJECTS']]
-    np5_process_path = cfg['DATASETS']['NINAPRO_DB5']['PROCESSED_DATA_PATH']
-
-    np7_healthy_subjects = ['np7_'+str(s) for s in cfg['DATASETS']['NINAPRO_DB7']['HEALTHY_SUBJECTS']]
-    np7_process_path = cfg['DATASETS']['NINAPRO_DB7']['PROCESSED_DATA_PATH']
-
-    test_set_subjects = []
-    for id in subject_ids:
-        if id in np_healthy_subjects:
-            base_path = np_process_path
-        elif id in gm_healthy_subjects:
-            base_path = gm_process_path
-        elif id in np2_healthy_subjects:
-            base_path = np2_process_path
-        elif id in np5_healthy_subjects:
-            base_path = np5_process_path
-        elif id in np7_healthy_subjects:
-            base_path = np7_process_path
-        else:
-            raise Exception(f'id: {id} not in any datasets.')
-        path = convert_to_full_paths([id], base_path)
-        test_set_subjects += path
-
-    return test_set_subjects
-
-
-def segregate_data_by_reps(subject):
+def segregate_data_by_trials(subject):
     # Load their data
     test_x, test_y = load_and_concat(subject, ext='.pkl', include_uid=False, remove_trial_dim=False)
 
@@ -86,7 +48,7 @@ def segregate_data_by_reps(subject):
     return segregated_data, segregated_labels
 
 
-def split_data_by_reps(data, labels, num_reps, hard_lim=7):
+def split_data_by_trials(data, labels, num_reps, hard_lim=7):
     train_data = []
     train_labels = []
     test_data = []
@@ -116,10 +78,10 @@ def split_data_by_reps(data, labels, num_reps, hard_lim=7):
 
 
 def finetune(subject, res_df, base_save_dir, reduce_lr=False, evaluate_by_mv=False, voters=None):
-    seg_data, seg_labels = segregate_data_by_reps(subject)
+    seg_data, seg_labels = segregate_data_by_trials(subject)
 
-    num_reps = finetune_params['REPS']
-    train_data, train_labels, test_data, test_labels = split_data_by_reps(seg_data, seg_labels, num_reps)
+    num_reps = finetune_params['TRIALS']
+    train_data, train_labels, test_data, test_labels = segregate_data_by_trials(seg_data, seg_labels, num_reps)
 
     train_data = torch.Tensor(train_data)
     train_labels = torch.Tensor(train_labels).to(torch.long)
@@ -202,13 +164,6 @@ def finetune(subject, res_df, base_save_dir, reduce_lr=False, evaluate_by_mv=Fal
 
     return res_df
 
-    # min_loss = np.float('inf')
-    # for epoch in range(finetune_params['EPOCHS']):
-    #     print(f'\n---- Epoch: {epoch} ----\n')
-    #     loss = model.fit(train_loader, epoch)
-    #     if loss < min_loss:
-    #         torch.save(model.state_dict(), os.path.join(save_dir, 'best_model.pth'))
-
 
 if __name__ == '__main__':
     finetune_params = cfg['FINETUNE']
@@ -239,17 +194,6 @@ if __name__ == '__main__':
     # Load test set subjects nums
     test_set_subjects_path = finetune_params['TEST_SET_SUBJECTS_PATH']
     test_set_subjects = torch.load(test_set_subjects_path)
-
-    if finetune_params['ON_AMPUTEES']:
-        amputee_ids = ['S101', 'S102', 'S103', 'S104', 'S105', 'S106', 'S107']
-        for i in range(len(test_set_subjects)):
-            if 'ninapro_db10' in test_set_subjects[i] and len(amputee_ids) > 0:
-                curr_subject = test_set_subjects[i].split('/')[-1]
-                amputee = test_set_subjects[i].split(curr_subject)[0] + amputee_ids.pop()
-                test_set_subjects[i] = amputee
-
-    if finetune_params['RUN_LOCALLY']:  # Adjust paths
-        test_set_subjects = adjust_subject_paths(test_set_subjects)
 
     res_df = pd.DataFrame(columns=['Subject',
                                    'F1 OH', 'F1 TVG', 'F1 LP',

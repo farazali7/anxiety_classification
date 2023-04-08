@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-from classification.src.config import cfg
-from classification.src.utils.data_pipeline import load_data, load_and_concat, convert_to_full_paths
+from src.config import cfg
+from src.utils.data_pipeline import load_data, load_and_concat, convert_to_full_paths
 
 
 def plot_signal(signal_data, time_vec=None, x_label='', y_label='', title=''):

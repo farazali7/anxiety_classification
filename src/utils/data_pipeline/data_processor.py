@@ -156,6 +156,13 @@ if __name__ == '__main__':
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
+    process_data(subject_ids[0], data_dir=formatted_data_path,
+                                          preprocess_func=preprocess_dreamer_data,
+                                          preprocessing_args=preprocessing_args,
+                                          feature_extraction_func=feature_extraction_func,
+                                          feature_extraction_args=feature_extraction_args,
+                                          save_dir=save_dir)
+
     with Pool() as pool:
         res = list(tqdm(pool.imap(partial(process_data,
                                           data_dir=formatted_data_path,

@@ -555,6 +555,62 @@ class CNN_ITER2(nn.Module):
         return x
 
 
+class Encoder(nn.Module):
+    def __init__(self, latent_size=10):
+        super(Encoder, self).__init__()
+        self.fc1 = nn.Linear(28 * 28, latent_size)
+
+    def forward(self, x):
+        x = torch.sigmoid(self.fc1(x))
+        return x
+
+
+class Decoder(nn.Module):
+    def __init__(self, latent_size=10):
+        super(Decoder, self).__init__()
+        self.fc1 = nn.Linear(latent_size, 28 * 28)
+
+    def forward(self, x):
+        x = torch.tanh(self.fc1(x))
+        return x
+
+
+class SAE(nn.Module):
+    def __init__(self, latent_size=10, loss_fn=F.mse_loss, lr=1e-4, l2=0.):
+        super(SAE, self).__init__()
+        self.latent_size = latent_size
+        self.E = Encoder(latent_size)
+        self.D = Decoder(latent_size)
+        self.loss_fn = loss_fn
+        self._rho_loss = None
+        self._loss = None
+        self.optim = optim.Adam(self.parameters(), lr=lr, weight_decay=l2)
+
+    def forward(self, x):
+        x = x.view(-1, 28 * 28)
+        h = self.E(x)
+        self.data_rho = h.mean(0)  # calculates rho from encoder activations
+        out = self.D(h)
+        return out
+
+    def decode(self, h):
+        with torch.no_grad():
+            return self.D(h)
+
+    def rho_loss(self, rho, size_average=True):
+        dkl = - rho * torch.log(self.data_rho) - (1 - rho) * torch.log(1 - self.data_rho)  # calculates KL divergence
+        if size_average:
+            self._rho_loss = dkl.mean()
+        else:
+            self._rho_loss = dkl.sum()
+        return self._rho_loss
+
+    def loss(self, x, target, **kwargs):
+        target = target.view(-1, 28 * 28)
+        self._loss = self.loss_fn(x, target, **kwargs)
+        return self._loss
+
+
 class CNN(nn.Module):
     def __init__(self, model_cfg):
         super(CNN, self).__init__()
@@ -568,6 +624,10 @@ class CNN(nn.Module):
         self.bnormconv2 = nn.BatchNorm2d(num_features=128)
         self.dropout2 = nn.Dropout2d(model_cfg['dropout'])
 
+        # SAE
+        self.SAE = SAE(latent_size=2048, loss_fn=F.mse_loss, lr=1e-4, l2=0.)
+
+        # MLP
         self.hidden1 = nn.Linear(2048, 512)
         self.bnorm1 = nn.BatchNorm1d(num_features=512)
 
@@ -594,6 +654,8 @@ class CNN(nn.Module):
         x = self.pool2(x)
 
         x = x.reshape(-1, 2048)
+
+        x = self.SAE(x)
 
         x = self.hidden1(x)
         x = self.bnorm1(x)
